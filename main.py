@@ -15,11 +15,56 @@
 # limitations under the License.
 #
 import webapp2
+import re
 
-class MainHandler(webapp2.RequestHandler):
+signup_form_header = '''
+    <DOCTYPE! html>
+    <meta charset="UTF-8">
+    <html>
+        <head>
+            <title>Signup Page</title>
+        </head>
+        <body>
+            <h2 style="text-align:center">Signup Form</h2>
+ '''
+signup_form_footer = '''
+        </body>
+        <footer></footer>
+    </html>
+ '''
+
+class SignupHandler(webapp2.RequestHandler):
     def get(self):
-        self.response.write('Hello world!')
+        signup_form_body = '''
+            <form style="display: flex; flex-direction: column; align-items: flex-end;max-width:60%">
+                <label>
+                    Username:
+                    <input type="text" name="username">
+                </label>
+
+                <label>
+                    Password:
+                    <input type="password" name="password">
+                </label>
+
+                <label>
+                    Verify Password:
+                    <input type="password" name="verify_password">
+                </label>
+
+                <label>
+                    Email(optional):
+                    <input type="email" name="email">
+                </label>
+
+                <label>
+                    <input type="submit">
+                </label>
+            </form>
+         '''
+        content = signup_form_header + signup_form_body + signup_form_footer
+        self.response.write(content)
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/signup', SignupHandler)
 ], debug=True)
