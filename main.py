@@ -16,6 +16,7 @@
 #
 import webapp2
 import re
+import cgi
 
 signup_form_header = '''
     <DOCTYPE! html>
@@ -27,44 +28,144 @@ signup_form_header = '''
         <body>
             <h2 style="text-align:center">Signup Form</h2>
  '''
+
+signup_form_body = '''
+    <form  action="/signup"
+           method="post"
+           style="display: flex; flex-direction: column; align-items: flex-end;max-width:60%">
+     <table>
+        <tr>
+            <td>
+                <label for='username'>Username</label>
+            </td>
+            <td>
+                <input type='text'
+                       name = 'username' {username_val} required>
+            </td>
+            <td>
+                <span style='color:red;'>{username_error}</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for='password'> Password </label>
+            </td>
+            <td>
+                <input type='password' name='password' required>
+            </td>
+            <td>
+                <span style='color:red'>{password_error}</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for='verify_password'>Verify Password</label>
+            </td>
+            <td>
+                <input type='password' name='verify_password' required>
+            </td>
+            <td>
+                <span style='color:red'>{verify_password_error}</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for='email'>Email(Optional)</label>
+            </td>
+            <td>
+                <input type='email' name='email' {email_val}>
+            </td>
+            <td>
+                <span style='color:red'>{email_error}</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+            <td>
+                <input type="submit">
+            </td>
+        </tr>
+    </table>
+</form>'''
+
+
+
 signup_form_footer = '''
         </body>
         <footer></footer>
     </html>
  '''
 
+# Compiled regex
+username_re = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+password_re = re.compile(r"^.{3,20}$")
+email_re = re.compile(r"^[\s]+@[\s]+.[\s]+$")
+
+class IndexPageHandler(webapp2.RequestHandler):
+    def get(self):
+        self.redirect('/signup')
+
+
 class SignupHandler(webapp2.RequestHandler):
     def get(self):
-        signup_form_body = '''
-            <form style="display: flex; flex-direction: column; align-items: flex-end;max-width:60%">
-                <label>
-                    Username:
-                    <input type="text" name="username">
-                </label>
 
-                <label>
-                    Password:
-                    <input type="password" name="password">
-                </label>
+        signup_body = signup_form_body.format(username_error = "",
+                                              password_error = "",
+                                              username_val = "",
+                                              email_val = "",
+                                              verify_password_error = "",
+                                              email_error = "")
 
-                <label>
-                    Verify Password:
-                    <input type="password" name="verify_password">
-                </label>
+        content = signup_form_header + signup_body + signup_form_footer
+        self.response.write(content)
 
-                <label>
-                    Email(optional):
-                    <input type="email" name="email">
-                </label>
+    def post(self):
+        # init error variables
+        username_error = ""
+        password_error = ""
+        verify_password_error = ""
+        email_error = ""
 
-                <label>
-                    <input type="submit">
-                </label>
-            </form>
-         '''
-        content = signup_form_header + signup_form_body + signup_form_footer
+        # get data from posted from
+        username = cgi.escape(self.request.get("username"),quote=True)
+        password = cgi.escape(self.request.get("password"),quote=True)
+        password_verify = cgi.escape(self.request.get("verify_password"),quote=True)
+        email = cgi.escape(self.request.get("email"), quote=True)
+
+
+        if (not username.strip() or not username_re.match(username)):
+            username_error = "That's not a valid username!"
+        if not password_re.match(password):
+            password_error = "Password must be 3 to 20 characters long!"
+        if password_verify != password:
+            verify_password_error = "Passwords do not match!"
+        if not email_re.match(email):
+            email_error = "That's not a valid email address!"
+
+        if (not username_error and not password_error and not verify_password_error):
+            self.redirect("/welcome?username=" + username)
+        else:
+            signup_body = signup_form_body.format(username_val = "value=" + username.strip(),
+                                                  email_val = "value=" + email,
+                                                  username_error = username_error,
+                                                  password_error = password_error,
+                                                  verify_password_error = verify_password_error,
+                                                  email_error = email_error)
+            content = signup_form_header + signup_body + signup_form_footer
+            self.response.write(content)
+
+
+class WelcomePageHandler(webapp2.RequestHandler):
+    def get(self):
+        username = self.request.get('username');
+        content = """
+        <h2>Welcome user {} !</h2>
+        """.format(username)
         self.response.write(content)
 
 app = webapp2.WSGIApplication([
-    ('/signup', SignupHandler)
+    ('/', IndexPageHandler),
+    ('/signup', SignupHandler),
+    ('/welcome', WelcomePageHandler),
 ], debug=True)
