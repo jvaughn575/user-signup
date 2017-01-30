@@ -25,15 +25,15 @@ signup_form_header = '''
         <head>
             <title>Signup Page</title>
         </head>
-        <body>
+        <body style = "background: linear-gradient(to bottom, rgba(252,255,244,1) 0%,rgba(223,229,215,1) 40%,rgba(179,190,173,1) 100%);">
             <h2 style="text-align:center">Signup Form</h2>
  '''
 
 signup_form_body = '''
     <form  action="/signup"
            method="post"
-           style="display: flex; flex-direction: column; align-items: flex-end;max-width:60%">
-     <table>
+           style="display: flex; flex-direction: column; align-items: flex-center">
+     <table style="margin: 0 0 auto 40%;">
         <tr>
             <td>
                 <label for='username'>Username</label>
@@ -100,7 +100,7 @@ signup_form_footer = '''
 # Compiled regex
 username_re = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 password_re = re.compile(r"^.{3,20}$")
-email_re = re.compile(r"^[\s]+@[\s]+.[\s]+$")
+email_re = re.compile(r"^[\S]+@[\S]+.[\S]+$")
 
 class IndexPageHandler(webapp2.RequestHandler):
     def get(self):
@@ -140,10 +140,11 @@ class SignupHandler(webapp2.RequestHandler):
             password_error = "Password must be 3 to 20 characters long!"
         if password_verify != password:
             verify_password_error = "Passwords do not match!"
-        if not email_re.match(email):
-            email_error = "That's not a valid email address!"
+        if email.strip():
+            if not email_re.match(email):
+                email_error = "That's not a valid email address!"
 
-        if (not username_error and not password_error and not verify_password_error):
+        if (not username_error and not password_error and not verify_password_error and not email_error):
             self.redirect("/welcome?username=" + username)
         else:
             signup_body = signup_form_body.format(username_val = "value=" + username.strip(),
@@ -158,10 +159,19 @@ class SignupHandler(webapp2.RequestHandler):
 
 class WelcomePageHandler(webapp2.RequestHandler):
     def get(self):
+        welcome_header = '''
+            <DOCTYPE! html>
+            <meta charset="UTF-8">
+            <html>
+                <head>
+                    <title>Welcome Page</title>
+                </head>
+                <body style = "background: linear-gradient(to bottom, rgba(252,255,244,1) 0%,rgba(223,229,215,1) 40%,rgba(179,190,173,1) 100%);">
+
+         '''
+
         username = self.request.get('username');
-        content = """
-        <h2>Welcome user {} !</h2>
-        """.format(username)
+        content = welcome_header + "<h2>Welcome user {} !</h2>".format(username) + signup_form_footer
         self.response.write(content)
 
 app = webapp2.WSGIApplication([
